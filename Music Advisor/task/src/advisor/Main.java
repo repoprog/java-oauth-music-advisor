@@ -62,8 +62,8 @@ public class Main {
 
     public static String SERVER_PATH;
     public static String REDIRECT_URI = "http://localhost:8080";
-    public static String CLIENT_ID = "fe5116329022495595d5b72fc1076a82";
-    public static String CLIENT_SECRET = "2b27ffc709364928bd6e3a8e802224d0";
+    public static String CLIENT_ID = "put";
+    public static String CLIENT_SECRET = "put";
     public static String ACCESS_CODE = "";
 
     public static void createServer() {
