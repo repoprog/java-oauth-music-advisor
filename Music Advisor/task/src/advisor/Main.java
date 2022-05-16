@@ -1,5 +1,7 @@
 package advisor;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -10,13 +12,18 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        Main.SERVER_PATH = args.length != 0 && args[0].equals("-access") ?
+        List<String> commands = Arrays.asList(args);
+        Main.SERVER_PATH = commands.contains("-access") ?
                 args[1] : "https://accounts.spotify.com";
+        Main.API_PATH = commands.contains("-resource") ?
+                args[3] : "https://api.spotify.com";
 
         boolean quit = false;
         boolean authOrExit;
@@ -36,7 +43,7 @@ public class Main {
                 case "auth":
                     createServer();
                     getToken();
-                    System.out.println("---SUCCESS---");
+                    System.out.println("Success!");
                     break;
                 case "new":
                     printNew();
@@ -65,6 +72,8 @@ public class Main {
     public static String CLIENT_ID = "fe5116329022495595d5b72fc1076a82";
     public static String CLIENT_SECRET = "2b27ffc709364928bd6e3a8e802224d0";
     public static String ACCESS_CODE = "";
+    public static String accessToken;
+    public static String API_PATH;
 
     public static void createServer() {
         String uri = SERVER_PATH + "/authorize"
@@ -112,7 +121,7 @@ public class Main {
     }
 
     public static void getToken() {
-        System.out.println("making http request for access_token...");
+        System.out.println("Making http request for access_token...");
         HttpClient client = HttpClient.newBuilder().build();
         HttpRequest request = HttpRequest.newBuilder()
                 .header("Content-Type", "application/x-www-form-urlencoded")
@@ -127,41 +136,53 @@ public class Main {
         try {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             System.out.println("response:");
+            String json = response.body();
+            JsonObject jo = JsonParser.parseString(json).getAsJsonObject();
+            accessToken = jo.get("access_token").getAsString();
             System.out.println(response.body());
+
         } catch (IOException | InterruptedException e) {
             System.out.println(e.getMessage());
         }
     }
 
     public static void printNew() {
-        System.out.println("---NEW RELEASES---\n" +
-                "Mountains [Sia, Diplo, Labrinth]\n" +
-                "Runaway [Lil Peep]\n" +
-                "The Greatest Show [Panic! At The Disco]\n" +
-                "All Out Life [Slipknot]");
+        String apiUrl = API_PATH +  "/v1/browse/new-releases";
+        System.out.println(makeGetRequest(apiUrl));
     }
 
+
     public static void printFeatured() {
-        System.out.println("---FEATURED---\n" +
-                "Mellow Morning\n" +
-                "Wake Up and Smell the Coffee\n" +
-                "Monday Motivation\n" +
-                "Songs to Sing in the Shower");
+        String apiUrl = API_PATH +  "/v1/browse/featured-playlists";
+        System.out.println(makeGetRequest(apiUrl));
     }
 
     public static void printCategories() {
-        System.out.println("---CATEGORIES---" +
-                "Top Lists\n" +
-                "Pop\n" +
-                "Mood\n" +
-                "Latin");
+        String apiUrl = API_PATH +  "/v1/browse/categories";
+        System.out.println(makeGetRequest(apiUrl));
     }
 
     public static void printPlaylists() {
-        System.out.println("---MOOD PLAYLISTS---\n" +
-                "Walk Like A Badass  \n" +
-                "Rage Beats  \n" +
-                "Arab Mood Booster  \n" +
-                "Sunday Stroll");
+        String apiUrl = API_PATH +  "/v1/browse/categories/{category_id}/playlists";
+        System.out.println(makeGetRequest(apiUrl));
+    }
+
+    public static String makeGetRequest(String apiUrl) {
+        String json = null;
+        HttpClient client = HttpClient.newBuilder().build();
+        HttpRequest request = HttpRequest.newBuilder()
+                .header("Authorization", "Bearer " + accessToken)
+                .uri(URI.create(apiUrl))
+                .GET()
+                .build();
+        try {
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            json = response.body();
+            System.out.println(response.body());
+        } catch (IOException | InterruptedException e) {
+            System.out.println(e.getMessage());
+        }
+        return json;
     }
 }
+
