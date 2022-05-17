@@ -1,5 +1,7 @@
 package advisor;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
@@ -12,6 +14,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
@@ -69,8 +72,8 @@ public class Main {
 
     public static String SERVER_PATH;
     public static String REDIRECT_URI = "http://localhost:8080";
-    public static String CLIENT_ID = "put";
-    public static String CLIENT_SECRET = "put";
+    public static String CLIENT_ID = "fe5116329022495595d5b72fc1076a82";
+    public static String CLIENT_SECRET = "2b27ffc709364928bd6e3a8e802224d0";
     public static String ACCESS_CODE = "";
     public static String accessToken;
     public static String API_PATH;
@@ -147,10 +150,17 @@ public class Main {
     }
 
     public static void printNew() {
-        String apiUrl = API_PATH +  "/v1/browse/new-releases";
-        System.out.println(makeGetRequest(apiUrl));
+        List<JsonObject> albumList = new ArrayList<>();
+        String apiUrl = API_PATH + "/v1/browse/new-releases";
+        String json = makeGetRequest(apiUrl);
+        JsonObject jo = JsonParser.parseString(json).getAsJsonObject();
+        JsonObject albumsObj = jo.getAsJsonObject("albums");
+        System.out.println(albumsObj);
+        for (JsonElement album : albumsObj.getAsJsonArray("items")) {
+            albumList.add(album.getAsJsonObject());
+        }
+        albumList.forEach(e-> System.out.println(e));
     }
-
 
     public static void printFeatured() {
         String apiUrl = API_PATH +  "/v1/browse/featured-playlists";
@@ -178,11 +188,36 @@ public class Main {
         try {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             json = response.body();
-            System.out.println(response.body());
         } catch (IOException | InterruptedException e) {
             System.out.println(e.getMessage());
         }
         return json;
+    }
+}
+
+class Album {
+    private String name;
+    private String artist;
+
+    public Album(String name, String artist) {
+        this.name = name;
+        this.artist = artist;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getArtist() {
+        return artist;
+    }
+
+    public void setArtist(String artist) {
+        this.artist = artist;
     }
 }
 
