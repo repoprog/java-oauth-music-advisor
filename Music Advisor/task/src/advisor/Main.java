@@ -143,37 +143,67 @@ public class Main {
             JsonObject jo = JsonParser.parseString(json).getAsJsonObject();
             accessToken = jo.get("access_token").getAsString();
             System.out.println(response.body());
-
         } catch (IOException | InterruptedException e) {
+
             System.out.println(e.getMessage());
         }
     }
 
     public static void printNew() {
-        List<JsonObject> albumList = new ArrayList<>();
         String apiUrl = API_PATH + "/v1/browse/new-releases";
         String json = makeGetRequest(apiUrl);
+        List<JsonObject> albumItems = new ArrayList<>();
         JsonObject jo = JsonParser.parseString(json).getAsJsonObject();
         JsonObject albumsObj = jo.getAsJsonObject("albums");
-        System.out.println(albumsObj);
         for (JsonElement album : albumsObj.getAsJsonArray("items")) {
-            albumList.add(album.getAsJsonObject());
+            albumItems.add(album.getAsJsonObject());
         }
-        albumList.forEach(e-> System.out.println(e));
+
+        for (JsonObject album : albumItems) {
+            System.out.println(album.get("name").getAsString());
+            for (JsonElement el : album.getAsJsonArray("artists")) {
+                //take object from JSON Array "artists" and print "name" and "spotify" elements from it
+                System.out.println("[" + el.getAsJsonObject().get("name").getAsString() + "]");
+                System.out.println(el.getAsJsonObject().get("external_urls")
+                        .getAsJsonObject().get("spotify").getAsString() + "\n");
+            }
+        }
     }
 
     public static void printFeatured() {
-        String apiUrl = API_PATH +  "/v1/browse/featured-playlists";
-        System.out.println(makeGetRequest(apiUrl));
+        String apiUrl = API_PATH + "/v1/browse/featured-playlists";
+        String json = makeGetRequest(apiUrl);
+        List<JsonObject> featuredItems = new ArrayList<>();
+        JsonObject jo = JsonParser.parseString(json).getAsJsonObject();
+        JsonObject featuredObj = jo.getAsJsonObject("playlists");
+        for (JsonElement featured : featuredObj.getAsJsonArray("items")) {
+            featuredItems.add(featured.getAsJsonObject());
+        }
+
+        for (JsonObject featured : featuredItems) {
+            System.out.println(featured.get("name").getAsString());
+            System.out.println(featured.getAsJsonObject().get("external_urls")
+                    .getAsJsonObject().get("spotify").getAsString() + "\n");
+        }
     }
 
     public static void printCategories() {
-        String apiUrl = API_PATH +  "/v1/browse/categories";
-        System.out.println(makeGetRequest(apiUrl));
+        String apiUrl = API_PATH + "/v1/browse/categories";
+        String json = makeGetRequest(apiUrl);
+        List<JsonObject> categoryItems = new ArrayList<>();
+        JsonObject jo = JsonParser.parseString(json).getAsJsonObject();
+        JsonObject categoriesObj = jo.getAsJsonObject("categories");
+        for (JsonElement category : categoriesObj.getAsJsonArray("items")) {
+            categoryItems.add(category.getAsJsonObject());
+        }
+
+        for (JsonObject category : categoryItems) {
+            System.out.println(category.get("name").getAsString());
+        }
     }
 
     public static void printPlaylists() {
-        String apiUrl = API_PATH +  "/v1/browse/categories/{category_id}/playlists";
+        String apiUrl = API_PATH + "/v1/browse/categories/{category_id}/playlists";
         System.out.println(makeGetRequest(apiUrl));
     }
 
