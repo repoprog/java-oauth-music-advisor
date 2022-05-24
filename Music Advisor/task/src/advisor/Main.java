@@ -14,10 +14,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
@@ -33,16 +30,17 @@ public class Main {
         boolean started = true;
         while (!quit) {
 
-            String choice = scanner.nextLine().toLowerCase();
+            String choice = scanner.nextLine();
             authOrExit = choice.equals("auth") || choice.equals("exit");
 
             while (started && !authOrExit) {
                 System.out.println("Please, provide access for application.");
-                choice = scanner.nextLine().toLowerCase();
+                choice = scanner.nextLine();
                 authOrExit = choice.equals("auth") || choice.equals("exit");
             }
             started = false;
-            switch (choice) {
+            String[] command = choice.split(" ");
+            switch (command[0]) {
                 case "auth":
                     createServer();
                     getToken();
@@ -57,8 +55,9 @@ public class Main {
                 case "categories":
                     printCategories();
                     break;
-                case "playlists mood":
-                    printPlaylists();
+                case "playlists":
+                    String categoryName = choice.replace("playlists ", "");
+                    printPlaylists(categoryName);
                     break;
                 case "exit":
                     quit = true;
@@ -188,8 +187,42 @@ public class Main {
     }
 
     public static void printCategories() {
+        Map<String, String> categoriesMap = createMapOfCategories();
+        categoriesMap.forEach((k, v) -> System.out.println(k + " " + v));
+    }
+
+    public static void printPlaylists(String categoryName) {
+        Map<String, String> categoriesMap = createMapOfCategories();
+        if (!categoriesMap.containsKey(categoryName)) {
+            System.out.println("Unknown category name.");
+            return;
+        }
+        String categoryId = categoriesMap.get(categoryName);
+
+        String apiUrl = API_PATH + "/v1/browse/categories/" + categoryId + "/playlists";
+        String json = makeGetRequest(apiUrl);
+        if (json.contains("error")) {
+            System.out.println("Specified id doesn't exist");
+        } else {
+            List<JsonObject> featuredItems = new ArrayList<>();
+            JsonObject jo = JsonParser.parseString(json).getAsJsonObject();
+            JsonObject featuredObj = jo.getAsJsonObject("playlists");
+            for (JsonElement featured : featuredObj.getAsJsonArray("items")) {
+                featuredItems.add(featured.getAsJsonObject());
+            }
+
+            for (JsonObject featured : featuredItems) {
+                System.out.println(featured.get("name").getAsString());
+                System.out.println(featured.getAsJsonObject().get("external_urls")
+                        .getAsJsonObject().get("spotify").getAsString() + "\n");
+            }
+        }
+    }
+
+    public static Map<String, String> createMapOfCategories() {
         String apiUrl = API_PATH + "/v1/browse/categories";
         String json = makeGetRequest(apiUrl);
+        Map<String, String> categoriesMap = new HashMap<>();
         List<JsonObject> categoryItems = new ArrayList<>();
         JsonObject jo = JsonParser.parseString(json).getAsJsonObject();
         JsonObject categoriesObj = jo.getAsJsonObject("categories");
@@ -198,14 +231,11 @@ public class Main {
         }
 
         for (JsonObject category : categoryItems) {
-            System.out.println(category.get("name").getAsString());
+            categoriesMap.put(category.get("name").getAsString(), category.get("id").getAsString());
         }
+        return categoriesMap;
     }
 
-    public static void printPlaylists() {
-        String apiUrl = API_PATH + "/v1/browse/categories/{category_id}/playlists";
-        System.out.println(makeGetRequest(apiUrl));
-    }
 
     public static String makeGetRequest(String apiUrl) {
         String json = null;
