@@ -152,20 +152,24 @@ public class Main {
         String apiUrl = API_PATH + "/v1/browse/new-releases";
         String json = makeGetRequest(apiUrl);
         List<JsonObject> albumItems = new ArrayList<>();
+
         JsonObject jo = JsonParser.parseString(json).getAsJsonObject();
         JsonObject albumsObj = jo.getAsJsonObject("albums");
+
         for (JsonElement album : albumsObj.getAsJsonArray("items")) {
             albumItems.add(album.getAsJsonObject());
         }
 
         for (JsonObject album : albumItems) {
             System.out.println(album.get("name").getAsString());
+            List<String> artistList = new ArrayList<>();
             for (JsonElement el : album.getAsJsonArray("artists")) {
                 //take object from JSON Array "artists" and print "name" and "spotify" elements from it
-                System.out.println("[" + el.getAsJsonObject().get("name").getAsString() + "]");
-                System.out.println(el.getAsJsonObject().get("external_urls")
-                        .getAsJsonObject().get("spotify").getAsString() + "\n");
+                artistList.add(el.getAsJsonObject().get("name").getAsString());
             }
+            System.out.println(artistList);
+            System.out.println(album.getAsJsonObject().get("external_urls")
+                    .getAsJsonObject().get("spotify").getAsString() + "\n");
         }
     }
 
@@ -188,7 +192,7 @@ public class Main {
 
     public static void printCategories() {
         Map<String, String> categoriesMap = createMapOfCategories();
-        categoriesMap.forEach((k, v) -> System.out.println(k + " " + v));
+        categoriesMap.forEach((k, v) -> System.out.println(k + "  " + v));
     }
 
     public static void printPlaylists(String categoryName) {
@@ -202,7 +206,9 @@ public class Main {
         String apiUrl = API_PATH + "/v1/browse/categories/" + categoryId + "/playlists";
         String json = makeGetRequest(apiUrl);
         if (json.contains("error")) {
-            System.out.println("Specified id doesn't exist");
+            String errorMsg = JsonParser.parseString(json).getAsJsonObject()
+                    .getAsJsonObject("error").get("message").getAsString();
+            System.out.println(errorMsg);
         } else {
             List<JsonObject> featuredItems = new ArrayList<>();
             JsonObject jo = JsonParser.parseString(json).getAsJsonObject();
