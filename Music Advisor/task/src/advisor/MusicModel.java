@@ -1,5 +1,6 @@
 package advisor;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
@@ -12,6 +13,10 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MusicModel {
     private static String SERVER_PATH;
@@ -21,9 +26,14 @@ public class MusicModel {
     private static String ACCESS_CODE = "";
     private static String accessToken;
     private static String API_PATH;
+    private static int pages;
 
     public static String getServerPath() {
         return SERVER_PATH;
+    }
+
+    public static void setPages(int showPages) {
+        pages= showPages;
     }
 
     public static void setServerPath(String serverPath) {
@@ -111,5 +121,39 @@ public class MusicModel {
 
             System.out.println(e.getMessage());
         }
+    }
+    public static Map<String, String> createMapOfCategories() {
+        String apiUrl = API_PATH + "/v1/browse/categories";
+        String json = makeGetRequest(apiUrl);
+        Map<String, String> categoriesMap = new HashMap<>();
+        List<JsonObject> categoryItems = new ArrayList<>();
+        JsonObject jo = JsonParser.parseString(json).getAsJsonObject();
+        JsonObject categoriesObj = jo.getAsJsonObject("categories");
+        for (JsonElement category : categoriesObj.getAsJsonArray("items")) {
+            categoryItems.add(category.getAsJsonObject());
+        }
+
+        for (JsonObject category : categoryItems) {
+            categoriesMap.put(category.get("name").getAsString(), category.get("id").getAsString());
+        }
+        return categoriesMap;
+    }
+
+
+    public static String makeGetRequest(String apiUrl) {
+        String json = null;
+        HttpClient client = HttpClient.newBuilder().build();
+        HttpRequest request = HttpRequest.newBuilder()
+                .header("Authorization", "Bearer " + accessToken)
+                .uri(URI.create(apiUrl))
+                .GET()
+                .build();
+        try {
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            json = response.body();
+        } catch (IOException | InterruptedException e) {
+            System.out.println(e.getMessage());
+        }
+        return json;
     }
 }
