@@ -10,8 +10,8 @@ public class Main {
         MusicModel.setServerPath(SERVER_PATH);
         String API_PATH = commands.contains("-resource") ? args[3] : "https://api.spotify.com";
         MusicModel.setApiPath(API_PATH);
-        String pages = commands.contains("-pages") ? args[5] : "5";
-        MusicModel.setPages(Integer.parseInt(pages));
+        String pages = commands.contains("-page") ? args[5] : "5";
+        MusicModel.setRecordsPerPage(Integer.parseInt(pages));
 
 
         MusicController.menu();
